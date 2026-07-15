@@ -1,14 +1,19 @@
-model/data/raw/ascii
-model/data/raw/lineStrokes
-model/data/raw/original
-model/data/processed
-output
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
 
-logs
-predictions
+# Environments
+.venv/
+venv/
 
-.idea
-venv
-img
-__pycache__
-/_main.py
+# Generated handwriting output
+output/
+img/
+
+# Editors
+.idea/
+.vscode/
+.DS_Store

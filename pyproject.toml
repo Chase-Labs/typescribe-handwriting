@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "typescribe-handwriting"
+version = "2.0.0"
+description = "Convert text into realistic handwriting SVGs with a pretrained RNN"
+readme = "README.md"
+license = { file = "LICENSE" }
+# Standardised on 3.11: it is the newest Python that tensorflow 2.15 supports,
+# and the version everything here is tested against (see .python-version).
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    # 2.15 is the last TensorFlow release supporting the TF1-style graph code
+    # this pretrained model needs (2.16 switched to Keras 3 and dropped pieces
+    # of the compat.v1 API). It is also the first line with native wheels for
+    # both Apple Silicon and Linux.
+    "tensorflow>=2.15,<2.16",
+    "tensorflow-probability>=0.23,<0.24",  # must match the tensorflow minor version
+    "numpy>=1.23,<2",
+    "scipy>=1.10",
+    "svgwrite>=1.4",
+]
+
+[project.optional-dependencies]
+# PNG export; needs the system cairo library (brew install cairo / apt-get install libcairo2).
+png = ["cairosvg>=2.7"]
+
+[project.scripts]
+typescribe = "handwriting_synthesis.cli:main"
+
+[dependency-groups]
+# Dev-only tools (installed by `uv sync`, not shipped with the package).
+dev = ["ruff"]
+
+[project.urls]
+Upstream = "https://github.com/rudyoactiv/typescribe-handwriting"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/handwriting_synthesis"]
