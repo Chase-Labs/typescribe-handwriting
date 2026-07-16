@@ -26,7 +26,10 @@ __version__ = "2.0.0"
 
 # The synthesizer pulls in TensorFlow, which is slow to import and not needed
 # for the preprocessing/rendering stages — load it lazily on first access.
-_LAZY_IMPORTS = {"HandwritingSynthesizer": "synthesizer", "MAX_LINE_LENGTH": "synthesizer"}
+_LAZY_IMPORTS = {
+    "HandwritingSynthesizer": "synthesizer",
+    "MAX_LINE_LENGTH": "synthesizer",
+}
 
 
 def __getattr__(name: str):
@@ -35,6 +38,7 @@ def __getattr__(name: str):
 
         return getattr(import_module(f".{_LAZY_IMPORTS[name]}", __name__), name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "HandwritingSynthesizer",

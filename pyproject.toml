@@ -21,6 +21,7 @@ dependencies = [
     "numpy>=1.23,<2",
     "scipy>=1.10",
     "svgwrite>=1.4",
+    "cairosvg>=2.9.0",
 ]
 
 [project.optional-dependencies]

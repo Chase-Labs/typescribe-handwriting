@@ -91,6 +91,184 @@ ALPHABET: tuple[str, ...] = (
     "z",
 )
 
+TRANSLATION_TABLE = str.maketrans(
+    {
+        # --- uppercase letters missing from the alphabet ---
+        "Q": "q",
+        "X": "x",
+        "Z": "z",
+        # --- dashes and hyphens ---
+        "‑": "-",  # ‑ non-breaking hyphen
+        "‒": "-",  # ‒ figure dash
+        "–": "-",  # – en dash
+        "—": "-",  # — em dash
+        "―": "-",  # ― horizontal bar
+        "−": "-",  # − minus sign
+        # --- single quotes / apostrophes ---
+        "‘": "'",  # '
+        "’": "'",  # '
+        "‚": "'",  # ‚
+        "‛": "'",  # ‛
+        "′": "'",  # ′ prime
+        "ʼ": "'",  # ʼ modifier apostrophe
+        "‹": "'",  # ‹
+        "›": "'",  # ›
+        "`": "'",
+        "´": "'",  # ´ acute accent
+        # --- double quotes ---
+        "“": '"',  # "
+        "”": '"',  # "
+        "„": '"',  # „
+        "‟": '"',  # ‟
+        "″": '"',  # ″ double prime
+        "«": '"',  # «
+        "»": '"',  # »
+        # --- spaces and invisibles ---
+        " ": " ",  # no-break space
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+        " ": " ",  # narrow no-break space
+        " ": " ",  # medium mathematical space
+        "　": " ",  # ideographic space
+        "	": " ",
+        # --- other punctuation ---
+        "…": "...",  # … ellipsis
+        "¡": "!",  # ¡
+        "¿": "?",  # ¿
+        "‽": "?!",  # ‽ interrobang
+        "•": "-",  # • bullet
+        "·": ".",  # · middle dot
+        "×": "x",  # × multiplication sign
+        # --- uppercase accented Latin letters ---
+        "À": "A",
+        "Á": "A",
+        "Â": "A",
+        "Ã": "A",
+        "Ä": "A",
+        "Å": "A",
+        "Ā": "A",
+        "Ă": "A",
+        "Ą": "A",
+        "Ç": "C",
+        "Ć": "C",
+        "Č": "C",
+        "È": "E",
+        "É": "E",
+        "Ê": "E",
+        "Ë": "E",
+        "Ē": "E",
+        "Ė": "E",
+        "Ę": "E",
+        "Ì": "I",
+        "Í": "I",
+        "Î": "I",
+        "Ï": "I",
+        "Ī": "I",
+        "İ": "I",
+        "Ñ": "N",
+        "Ń": "N",
+        "Ò": "O",
+        "Ó": "O",
+        "Ô": "O",
+        "Õ": "O",
+        "Ö": "O",
+        "Ø": "O",
+        "Ō": "O",
+        "Ù": "U",
+        "Ú": "U",
+        "Û": "U",
+        "Ü": "U",
+        "Ū": "U",
+        "Ů": "U",
+        "Ý": "Y",
+        "Ÿ": "Y",
+        "Ĝ": "G",
+        "Ğ": "G",
+        "Ł": "L",
+        "Ś": "S",
+        "Š": "S",
+        "Ź": "z",
+        "Ż": "z",
+        "Ž": "z",  # no uppercase Z in the alphabet
+        "Ð": "D",
+        "Đ": "D",
+        "Æ": "AE",
+        "Œ": "OE",
+        "Þ": "Th",
+        # --- lowercase accented Latin letters ---
+        "à": "a",
+        "á": "a",
+        "â": "a",
+        "ã": "a",
+        "ä": "a",
+        "å": "a",
+        "ā": "a",
+        "ă": "a",
+        "ą": "a",
+        "ç": "c",
+        "ć": "c",
+        "č": "c",
+        "è": "e",
+        "é": "e",
+        "ê": "e",
+        "ë": "e",
+        "ē": "e",
+        "ė": "e",
+        "ę": "e",
+        "ì": "i",
+        "í": "i",
+        "î": "i",
+        "ï": "i",
+        "ī": "i",
+        "ı": "i",
+        "ñ": "n",
+        "ń": "n",
+        "ò": "o",
+        "ó": "o",
+        "ô": "o",
+        "õ": "o",
+        "ö": "o",
+        "ø": "o",
+        "ō": "o",
+        "ù": "u",
+        "ú": "u",
+        "û": "u",
+        "ü": "u",
+        "ū": "u",
+        "ů": "u",
+        "ý": "y",
+        "ÿ": "y",
+        "ĝ": "g",
+        "ğ": "g",
+        "ł": "l",
+        "ś": "s",
+        "š": "s",
+        "ź": "z",
+        "ż": "z",
+        "ž": "z",
+        "ð": "d",
+        "đ": "d",
+        "æ": "ae",
+        "œ": "oe",
+        "ß": "ss",
+        "þ": "th",
+        # --- ligatures ---
+        "ﬀ": "ff",
+        "ﬁ": "fi",
+        "ﬂ": "fl",
+        "ﬃ": "ffi",
+        "ﬄ": "ffl",
+    }
+)
+
+
 _CHAR_TO_ID: dict[str, int] = {char: i for i, char in enumerate(ALPHABET)}
 
 
@@ -98,7 +276,7 @@ def is_supported(char: str) -> bool:
     """
     Return True if the model can draw `char`.
     """
-    return char in _CHAR_TO_ID
+    return char in _CHAR_TO_ID or char == "\n"
 
 
 def unsupported_chars(text: str) -> set[str]:

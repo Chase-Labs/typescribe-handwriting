@@ -11,6 +11,8 @@ import os
 import sys
 from pathlib import Path
 
+from handwriting_synthesis.page_layouts import PageLayoutEnum, get_page_layout
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -49,16 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="pen colour, any SVG colour (default: black)",
     )
     parser.add_argument(
-        "--max-line-length",
-        type=int,
-        default=60,
-        help="wrap lines at this many characters (default: 60, hard model limit 75)",
-    )
-    parser.add_argument(
-        "--lines-per-page",
-        type=int,
-        default=24,
-        help="ruled lines per page (default: 24)",
+        "--page-layout",
+        type=str,
+        default="a4",
+        help="the page layout we are formatting this for (default: a4)",
     )
     parser.add_argument(
         "--png",
@@ -80,16 +76,20 @@ def main(argv: list[str] | None = None) -> int:
 
     # Quiet TensorFlow's C++ startup chatter; must be set before TF is imported.
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
-    from handwriting_synthesis import HandwritingSynthesizer, prepare_text
+    from handwriting_synthesis.preprocessing import prepare_text
+    from handwriting_synthesis.synthesizer import HandwritingSynthesizer
 
     if not args.input.exists():
         print(f"error: input file '{args.input}' does not exist", file=sys.stderr)
         return 1
 
+    page_layout = args.page_layout or PageLayoutEnum.A4
+    layout = get_page_layout(page_layout)
+
     pages = prepare_text(
         args.input.read_text(encoding="utf-8"),
-        max_line_length=args.max_line_length,
-        lines_per_page=args.lines_per_page,
+        max_line_length=layout.max_line_length,
+        lines_per_page=layout.lines_per_page,
     )
     if not pages:
         print("error: input file contains no writable text", file=sys.stderr)
@@ -107,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
             styles=args.style,
             stroke_colors=args.stroke_color,
             stroke_widths=args.stroke_width,
+            page_layout=page_layout,
             png_path=svg_path.with_suffix(".png") if args.png else None,
         )
         print(f"Page {page_num}/{len(pages)} written to {svg_path}")

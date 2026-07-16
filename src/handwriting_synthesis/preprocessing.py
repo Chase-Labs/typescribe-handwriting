@@ -15,26 +15,21 @@ with no ML involved, so it is safe to modify freely.
 
 from . import alphabet
 
-#: Sensible default line length. The hard model limit is 75 characters per line
-#: (see synthesizer.MAX_LINE_LENGTH); 60 leaves comfortable margins on an A4 page.
-DEFAULT_MAX_LINE_LENGTH = 60
-
-#: Number of ruled lines on the default A4 page layout.
-DEFAULT_LINES_PER_PAGE = 24
-
 
 def sanitize(text: str) -> str:
     """
-    Replace every character the model cannot draw with a space.
+    Replace characters the model cannot draw with alternatives
 
-    >>> sanitize("Héllo, wörld!")
-    'H llo, w rld!'
+    >>> sanitize("Héllo, wörld! Here is a QR code!")
+    'Hello, world! Here is a qr code!
     """
-    return "".join(char if alphabet.is_supported(char) else " " for char in text)
+    _text = text.replace("QR", "qr").translate(alphabet.TRANSLATION_TABLE)
+    return "".join(char if alphabet.is_supported(char) else " " for char in _text)
 
 
-def wrap(text: str, max_line_length: int = DEFAULT_MAX_LINE_LENGTH) -> list[str]:
-    """Greedily wrap text into lines of at most `max_line_length` characters.
+def wrap(text: str, max_line_length: int) -> list[str]:
+    """
+    Greedily wrap text into lines of at most `max_line_length` characters.
 
     Wrapping happens on word boundaries. Existing newlines are respected as hard
     breaks; blank lines are dropped. A single word longer than `max_line_length`
@@ -45,6 +40,7 @@ def wrap(text: str, max_line_length: int = DEFAULT_MAX_LINE_LENGTH) -> list[str]
     for paragraph in text.splitlines():
         words = paragraph.split()
         if not words:
+            wrapped.append(".")  # Use '.' for a blank line
             continue
         current = words[0]
         for word in words[1:]:
@@ -57,9 +53,7 @@ def wrap(text: str, max_line_length: int = DEFAULT_MAX_LINE_LENGTH) -> list[str]
     return wrapped
 
 
-def paginate(
-    lines: list[str], lines_per_page: int = DEFAULT_LINES_PER_PAGE
-) -> list[list[str]]:
+def paginate(lines: list[str], lines_per_page: int) -> list[list[str]]:
     """
     Split a flat list of lines into pages of at most `lines_per_page` lines.
     """
@@ -67,9 +61,7 @@ def paginate(
 
 
 def prepare_text(
-    text: str,
-    max_line_length: int = DEFAULT_MAX_LINE_LENGTH,
-    lines_per_page: int = DEFAULT_LINES_PER_PAGE,
+    text: str, max_line_length: int, lines_per_page: int
 ) -> list[list[str]]:
     """
     Sanitize, wrap and paginate raw text into model-ready pages of lines.

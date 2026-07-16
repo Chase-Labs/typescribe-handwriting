@@ -12,45 +12,19 @@ write it to disk, optionally with a PNG conversion alongside.
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
 import svgwrite
 
 from . import strokes
-
-
-@dataclass(frozen=True)
-class PageLayout:
-    """Geometry and colours of the rendered page.
-
-    The defaults describe an A4-proportioned page (0.707 width/height ratio)
-    with 24 ruled lines, a red margin down the left and a matching double rule
-    across the top — i.e. a classic school notebook page.
-    """
-
-    #: Vertical distance between ruled lines, in SVG units (px).
-    line_height: float = 32.0
-    #: Number of ruled lines drawn on the page (extra text lines are dropped).
-    lines_per_page: int = 24
-    #: Page height in SVG units.
-    height: float = 896.0
-    #: Page width in SVG units. Defaults to A4 proportions.
-    width: float = field(default=896.0 * 0.707)
-    #: Gap between the left page edge and where handwriting starts.
-    margin_left: float = 64.0
-    #: Gap between the top page edge and the first ruled line.
-    margin_top: float = 96.0
-    background_color: str = "white"
-    margin_color: str = "red"
-    rule_color: str = "lightgrey"
+from .page_layouts import PageLayout, PageLayoutEnum, get_page_layout
 
 
 def render_page(
     stroke_offsets: Sequence[np.ndarray],
     lines: Sequence[str],
-    layout: PageLayout | None = None,
+    page_layout: PageLayoutEnum = PageLayoutEnum.A4,
     stroke_colors: Sequence[str] | None = None,
     stroke_widths: Sequence[float] | None = None,
 ) -> svgwrite.Drawing:
@@ -69,12 +43,12 @@ def render_page(
     Returns:
         The assembled `svgwrite.Drawing`.
     """
-    layout = layout or PageLayout()
+    layout = get_page_layout(page_layout)
     stroke_colors = stroke_colors or ["black"] * len(lines)
     stroke_widths = stroke_widths or [2.0] * len(lines)
 
     drawing = svgwrite.Drawing()
-    drawing.viewbox(width=layout.width, height=layout.height)
+    drawing.viewbox(width=int(layout.width), height=int(layout.height))
     _draw_ruled_background(drawing, layout)
 
     # Pen origin of the current line. The stroke coordinates produced below are
@@ -111,7 +85,7 @@ def save_page(
     stroke_offsets: Sequence[np.ndarray],
     lines: Sequence[str],
     svg_path: str | Path,
-    layout: PageLayout | None = None,
+    page_layout: PageLayoutEnum = PageLayoutEnum.A4,
     stroke_colors: Sequence[str] | None = None,
     stroke_widths: Sequence[float] | None = None,
     png_path: str | Path | None = None,
@@ -123,7 +97,13 @@ def save_page(
     """
     svg_path = Path(svg_path)
     svg_path.parent.mkdir(parents=True, exist_ok=True)
-    drawing = render_page(stroke_offsets, lines, layout, stroke_colors, stroke_widths)
+    drawing = render_page(
+        stroke_offsets=stroke_offsets,
+        lines=lines,
+        page_layout=page_layout,
+        stroke_colors=stroke_colors,
+        stroke_widths=stroke_widths,
+    )
     drawing.saveas(str(svg_path))
     if png_path is not None:
         convert_to_png(svg_path, png_path)
@@ -153,7 +133,9 @@ def convert_to_png(svg_path: str | Path, png_path: str | Path) -> Path:
 
 
 def _draw_ruled_background(drawing: svgwrite.Drawing, layout: PageLayout) -> None:
-    """Fill the page and draw the ruled lines plus the red margin rules."""
+    """
+    Fill the page and draw the ruled lines plus the red margin rules.
+    """
     drawing.add(
         drawing.rect(
             insert=(0, 0),
@@ -198,7 +180,8 @@ def _draw_ruled_background(drawing: svgwrite.Drawing, layout: PageLayout) -> Non
 def _strokes_to_path(
     coords: np.ndarray, color: str, width: float
 ) -> svgwrite.path.Path:
-    """Turn one line's pen coordinates into a single SVG path.
+    """
+    Turn one line's pen coordinates into a single SVG path.
 
     Each stroke becomes a Move-to followed by Line-to segments; a `pen_up`
     flag on a point starts a new stroke at the next point.

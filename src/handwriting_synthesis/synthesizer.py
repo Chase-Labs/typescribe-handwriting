@@ -24,7 +24,7 @@ import numpy as np
 
 from . import alphabet, config
 from .network import HandwritingNetwork
-from .rendering import PageLayout, save_page
+from .rendering import PageLayoutEnum, save_page
 
 # The model cannot write lines longer than this (a training-data limit).
 MAX_LINE_LENGTH = 75
@@ -116,10 +116,11 @@ class HandwritingSynthesizer:
         styles: PerLine = None,
         stroke_colors: PerLine = None,
         stroke_widths: PerLine = None,
-        layout: PageLayout | None = None,
+        page_layout: PageLayoutEnum = PageLayoutEnum.A4,
         png_path: str | Path | None = None,
     ) -> Path:
-        """Generate one page of handwriting and save it as an SVG.
+        """
+        Generate one page of handwriting and save it as an SVG.
 
         Convenience wrapper chaining :meth:`generate` and
         :func:`handwriting_synthesis.rendering.save_page`. A line consisting of
@@ -132,14 +133,16 @@ class HandwritingSynthesizer:
             stroke_offsets,
             drawn_lines,
             svg_path,
-            layout=layout,
+            page_layout=page_layout,
             stroke_colors=_per_line(stroke_colors, len(lines), "stroke_colors"),
             stroke_widths=_per_line(stroke_widths, len(lines), "stroke_widths"),
             png_path=png_path,
         )
 
     def close(self) -> None:
-        """Release the underlying TensorFlow session."""
+        """
+        Release the underlying TensorFlow session.
+        """
         self._network.close()
 
     def _validate(self, lines: Sequence[str]) -> None:
@@ -168,7 +171,8 @@ class HandwritingSynthesizer:
     def _load_style_priming(
         self, lines: Sequence[str], styles: Sequence[int]
     ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
-        """Load the reference sample for each line's style.
+        """
+        Load the reference sample for each line's style.
 
         Each style ships as a pair of files: the reference pen strokes, and the
         text those strokes spell out. The network is fed reference strokes plus
@@ -210,7 +214,9 @@ class HandwritingSynthesizer:
 
 
 def _per_line(value: PerLine, num_lines: int, name: str):
-    """Broadcast a scalar setting to one value per line; validate list lengths."""
+    """
+    Broadcast a scalar setting to one value per line; validate list lengths.
+    """
     if value is None:
         return None
     if isinstance(value, (int, float, str)):
@@ -221,7 +227,9 @@ def _per_line(value: PerLine, num_lines: int, name: str):
 
 
 def _pack(encoded: list[np.ndarray], buffer_size: int) -> tuple[np.ndarray, np.ndarray]:
-    """Pad a batch of encoded lines into one fixed-size int matrix + lengths."""
+    """
+    Pad a batch of encoded lines into one fixed-size int matrix + lengths.
+    """
     char_ids = np.zeros([len(encoded), buffer_size], dtype=np.int32)
     char_lengths = np.zeros([len(encoded)], dtype=np.int32)
     for i, ids in enumerate(encoded):
